@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美女图库 APP - 效果演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 40px;
+            padding: 20px 10px;
+            box-shadow: 0 0 30px rgba(255,255,255,0.1);
+            position: relative;
+            border: 3px solid #333;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        .home-screen {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .swipe-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .favorites-screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .favorites-header {
+            padding: 60px 20px 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .favorites-title {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .favorites-subtitle {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .favorites-grid {
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .favorite-item {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .favorite-item:hover {
+            transform: scale(0.95);
+        }
+
+        .favorite-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .action-menu {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(40, 40, 40, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px 20px 0 0;
+            padding: 20px 30px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .action-menu.show {
+            transform: translateY(0);
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 10px;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .menu-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .separator {
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+            margin: 5px 0;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+
+        .control-btn.active {
+            background: #007AFF;
+        }
+
+        .toast {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .demo-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-width: 200px;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideLeft {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .slide-up {
+            animation: slideUp 0.3s ease;
+        }
+
+        .slide-left {
+            animation: slideLeft 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-info">
+        <strong>美女图库 APP 演示</strong><br>
+        点击按钮体验不同功能
+    </div>
+
+    <div class="controls">
+        <button class="control-btn active" onclick="showHome()">首页</button>
+        <button class="control-btn" onclick="showFavorites()">收藏页</button>
+        <button class="control-btn" onclick="showMenu()">长按菜单</button>
+        <button class="control-btn" onclick="nextImage()">下一张</button>
+    </div>
+
+    <div class="phone-container">
+        <div class="screen">
+            <!-- 首页 -->
+            <div class="home-screen" id="homeScreen">
+                <div class="image-container">
+                    <img class="main-image" id="mainImage" src="https://picsum.photos/400/800?random=1" alt="美女图片">
+                    <div class="swipe-indicator">
+                        ⬆️ 上滑下一张 | ⬇️ 下滑上一张 | ⬅️ 左滑收藏页 | 长按菜单
+                    </div>
+                </div>
+            </div>
+
+            <!-- 收藏页 -->
+            <div class="favorites-screen" id="favoritesScreen">
+                <div class="favorites-header">
+                    <div class="favorites-title">我的收藏</div>
+                    <div class="favorites-subtitle">3 张图片</div>
+                </div>
+                <div class="favorites-grid">
+                    <div class="favorite-item" onclick="showToast('查看大图')">
+                        <img src="https://picsum.photos/400/800?random=2" alt="收藏1">
+                    </div>
+                    <div class="favorite-item" onclick="showToast('查看大图')">
+                        <img src="https://picsum.photos/400/800?random=3" alt="收藏2">
+                    </div>
+                    <div class="favorite-item" onclick="showToast('查看大图')">
+                        <img src="https://picsum.photos/400/800?random=4" alt="收藏3">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作菜单 -->
+            <div class="action-menu" id="actionMenu">
+                <div class="menu-item" onclick="toggleFavorite()">
+                    <span class="menu-icon" id="favoriteIcon">❤️</span>
+                    <span id="favoriteText">收藏</span>
+                </div>
+                <div class="separator"></div>
+                <div class="menu-item" onclick="downloadImage()">
+                    <span class="menu-icon">📥</span>
+                    <span>下载</span>
+                </div>
+            </div>
+
+            <!-- Toast 提示 -->
+            <div class="toast" id="toast"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentImageIndex = 1;
+        let isFavorited = false;
+        let currentScreen = 'home';
+
+        const images = [
+            'https://picsum.photos/400/800?random=1',
+            'https://picsum.photos/400/800?random=5',
+            'https://picsum.photos/400/800?random=6',
+            'https://picsum.photos/400/800?random=7',
+            'https://picsum.photos/400/800?random=8'
+        ];
+
+        function showHome() {
+            document.getElementById('homeScreen').style.display = 'flex';
+            document.getElementById('favoritesScreen').style.display = 'none';
+            document.getElementById('actionMenu').classList.remove('show');
+            updateActiveButton(0);
+            currentScreen = 'home';
+            
+            // 添加动画效果
+            document.getElementById('homeScreen').classList.add('slide-up');
+            setTimeout(() => {
+                document.getElementById('homeScreen').classList.remove('slide-up');
+            }, 300);
+        }
+
+        function showFavorites() {
+            document.getElementById('homeScreen').style.display = 'none';
+            document.getElementById('favoritesScreen').style.display = 'flex';
+            document.getElementById('actionMenu').classList.remove('show');
+            updateActiveButton(1);
+            currentScreen = 'favorites';
+            
+            // 添加动画效果
+            document.getElementById('favoritesScreen').classList.add('slide-left');
+            setTimeout(() => {
+                document.getElementById('favoritesScreen').classList.remove('slide-left');
+            }, 300);
+        }
+
+        function showMenu() {
+            if (currentScreen === 'home') {
+                const menu = document.getElementById('actionMenu');
+                menu.classList.toggle('show');
+                updateActiveButton(2);
+                
+                if (menu.classList.contains('show')) {
+                    showToast('长按菜单已显示');
+                }
+            } else {
+                showToast('请先切换到首页');
+            }
+        }
+
+        function nextImage() {
+            if (currentScreen === 'home') {
+                currentImageIndex = (currentImageIndex % images.length) + 1;
+                const mainImage = document.getElementById('mainImage');
+                mainImage.style.transform = 'scale(0.9)';
+                
+                setTimeout(() => {
+                    mainImage.src = images[currentImageIndex - 1];
+                    mainImage.style.transform = 'scale(1)';
+                }, 150);
+                
+                showToast('切换到下一张图片');
+                updateActiveButton(3);
+            } else {
+                showToast('请先切换到首页');
+            }
+        }
+
+        function toggleFavorite() {
+            isFavorited = !isFavorited;
+            const icon = document.getElementById('favoriteIcon');
+            const text = document.getElementById('favoriteText');
+            
+            if (isFavorited) {
+                icon.textContent = '💔';
+                text.textContent = '取消收藏';
+                showToast('已收藏');
+            } else {
+                icon.textContent = '❤️';
+                text.textContent = '收藏';
+                showToast('已取消收藏');
+            }
+            
+            document.getElementById('actionMenu').classList.remove('show');
+        }
+
+        function downloadImage() {
+            showToast('已保存到相册');
+            document.getElementById('actionMenu').classList.remove('show');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        function updateActiveButton(index) {
+            const buttons = document.querySelectorAll('.control-btn');
+            buttons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // 自动演示
+        let autoDemo = true;
+        let demoStep = 0;
+
+        function runAutoDemo() {
+            if (!autoDemo) return;
+            
+            const steps = [
+                () => showHome(),
+                () => nextImage(),
+                () => showMenu(),
+                () => toggleFavorite(),
+                () => showFavorites(),
+                () => showHome()
+            ];
+            
+            if (demoStep < steps.length) {
+                steps[demoStep]();
+                demoStep++;
+            } else {
+                demoStep = 0;
+            }
+        }
+
+        // 每3秒自动演示一个功能
+        setInterval(runAutoDemo, 3000);
+
+        // 点击任何按钮时停止自动演示
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                autoDemo = false;
+            });
+        });
+
+        // 添加触摸手势模拟
+        let startY = 0;
+        let startX = 0;
+
+        document.getElementById('homeScreen').addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+            startX = e.touches[0].clientX;
+        });
+
+        document.getElementById('homeScreen').addEventListener('touchend', (e) => {
+            const endY = e.changedTouches[0].clientY;
+            const endX = e.changedTouches[0].clientX;
+            const diffY = startY - endY;
+            const diffX = startX - endX;
+
+            if (Math.abs(diffY) > Math.abs(diffX)) {
+                if (diffY > 50) {
+                    nextImage(); // 上滑
+                } else if (diffY < -50) {
+                    showToast('查看上一张'); // 下滑
+                }
+            } else if (diffX > 50) {
+                showFavorites(); // 左滑
+            }
+        });
+
+        // 长按事件模拟
+        let longPressTimer;
+        document.getElementById('homeScreen').addEventListener('mousedown', () => {
+            longPressTimer = setTimeout(() => {
+                showMenu();
+            }, 500);
+        });
+
+        document.getElementById('homeScreen').addEventListener('mouseup', () => {
+            clearTimeout(longPressTimer);
+        });
+    </script>
+</body>
+</html>
